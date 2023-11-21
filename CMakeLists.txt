@@ -1,0 +1,14 @@
+cmake_minimum_required(VERSION 3.26)
+project(playground)
+project(output_an_image)
+project(ray_tracing)
+
+set(CMAKE_CXX_STANDARD 20)
+
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
+add_executable(playground playground.cpp)
+add_executable(output_an_image output_an_image/output_an_image.cpp)
+add_executable(ray_tracing main.cpp
+        includes/lambertian.h)
