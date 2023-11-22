@@ -124,6 +124,7 @@ public:
     friend vec3 cross(const vec3 &lhs, const vec3 &rhs);
     friend vec3 normalize(const vec3 &val);
     friend vec3 reflect(const vec3 &val, const vec3 &normal);
+    friend vec3 refract(const vec3& val, const vec3 &normal, const double etai_over_etat);
 };
 
 using point3 = vec3;
@@ -172,8 +173,29 @@ inline vec3 normalize(const vec3 &val) {
     return val / val.length();
 }
 
+/*
+ * We require that both val and normal to be unit vectors
+ */
 inline vec3 reflect(const vec3 &val, const vec3 &normal) {
     return val - 2 * dot(val, normal) * normal;
+}
+
+/*
+ * We require that both val and normal to be unit vectors
+ */
+inline vec3 refract(const vec3& val, const vec3 &normal, const double etai_over_etat) {
+    auto cos_theta = fmin(dot(-val, normal), 1.0);              // TODO: why fmin?
+    vec3 out_perp = etai_over_etat * (val + cos_theta * normal);
+    vec3 out_para = -std::sqrt(1.0 - out_perp.length_square()) * normal;
+    return out_perp + out_para;
+}
+
+inline vec3 random_in_unit_disk() {
+    while (true) {
+        auto p = vec3(utilities::random_double(-1,1), utilities::random_double(-1,1), 0);
+        if (p.length_square() < 1)
+            return p;
+    }
 }
 
 using normalize_func = vec3 (*) (const vec3&);

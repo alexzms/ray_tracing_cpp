@@ -12,3 +12,8 @@ add_executable(playground playground.cpp)
 add_executable(output_an_image output_an_image/output_an_image.cpp)
 add_executable(ray_tracing main.cpp
         includes/lambertian.h)
+
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(ray_tracing PUBLIC OpenMP::OpenMP_CXX)
+endif()

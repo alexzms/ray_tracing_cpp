@@ -20,5 +20,6 @@
 #include "material.h"
 #include "lambertian.h"
 #include "metal.h"
+#include "dielectric.h"
 
 #endif //RAY_TRACING_COMMON_H
