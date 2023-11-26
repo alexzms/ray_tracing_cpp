@@ -28,7 +28,7 @@ public:
             scatter_direction = refract(in.direction(), rec.normal, refract_ratio);
         }
 
-        out = ray(scatter_origin, scatter_direction);
+        out = ray(scatter_origin, scatter_direction, in.time());
         return true;
     }
 

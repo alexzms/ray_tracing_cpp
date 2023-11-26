@@ -20,6 +20,7 @@ public:
     unsigned int samples_per_pixel = 10;
     unsigned int max_depth = 50;
     double vfov = 90;
+    double exposure_time = 1;
     point3 lookfrom = point3{0, 0, -1};
     point3 lookat = point3{0, 0, 0};
     vec3 vup = vec3{0, 1, 0};
@@ -43,9 +44,9 @@ public:
         this->output_file = val;
     }
 
-    void set_focus_parameter(double defocus_angle, double focus_dist) {
-        this->defocus_angle = defocus_angle;
-        this->focus_dist = focus_dist;
+    void set_focus_parameter(double angle, double dist = 10.0) {
+        this->defocus_angle = angle;
+        this->focus_dist = dist;
         if (initialized) {
             refocus();
         }
@@ -53,7 +54,7 @@ public:
 
     [[nodiscard]] double focus_test(const hittable_list& world) {
         if (!initialized) initialize();
-        ray test_ray{camera_center, -w};
+        ray test_ray{camera_center, -w_};
         hit_record rec;
         if (world.hit(test_ray, interval(0.0001, utilities::infinity), rec)) {
             return (rec.p - camera_center).length();
@@ -69,9 +70,9 @@ public:
 //        focal_length = (lookat - lookfrom).length();
         focal_length = focus_dist;
 
-        w = normalize(lookfrom - lookat);                                   // opposite direction to view direction
-        u = normalize(cross(vup, w));
-        v = cross(w, u);
+        w_ = normalize(lookfrom - lookat);                                   // opposite direction to view direction
+        u = normalize(cross(vup, w_));
+        v = cross(w_, u);
 
         image_height = static_cast<int>(image_width / aspect_ratio);
         image_height = (image_height > 1) ? image_height : 1;
@@ -87,7 +88,7 @@ public:
         pixel_delta_u = viewport_u / image_width;
         pixel_delta_v = viewport_v / image_height;
 
-        viewport_upper_left = camera_center - (focal_length * w) - viewport_u / 2 - viewport_v / 2;
+        viewport_upper_left = camera_center - (focal_length * w_) - viewport_u / 2 - viewport_v / 2;
         pixel00_location = viewport_upper_left + 0.5 * pixel_delta_u + 0.5 * pixel_delta_v;
 
         auto defocus_radius = focus_dist * tan(utilities::degree_to_radian(defocus_angle / 2));
@@ -134,7 +135,7 @@ private:
     std::ostream *output;                                                  // if we want to output to file, set the
     std::string output_file;                                               // output_file to some string
 
-    vec3 u, v, w;                                                          // camera coordinate basis
+    vec3 u, v, w_;                                                          // camera coordinate basis
 
     vec3 defocus_disk_u;                                                   // camera defocus plane
     vec3 defocus_disk_v;
@@ -169,7 +170,7 @@ private:
         pixel_delta_u = viewport_u / image_width;
         pixel_delta_v = viewport_v / image_height;
 
-        viewport_upper_left = camera_center - (focal_length * w) - viewport_u / 2 - viewport_v / 2;
+        viewport_upper_left = camera_center - (focal_length * w_) - viewport_u / 2 - viewport_v / 2;
         pixel00_location = viewport_upper_left + 0.5 * pixel_delta_u + 0.5 * pixel_delta_v;
 
         auto defocus_radius = focus_dist * tan(utilities::degree_to_radian(defocus_angle / 2));
@@ -183,8 +184,9 @@ private:
 
         auto ray_origin = (defocus_angle <= 0) ? camera_center : defocus_disk_sample();
         auto ray_direction = pixel_random - ray_origin;
+        auto ray_time = utilities::random_double(0, exposure_time);
 
-        return ray{ray_origin, ray_direction};
+        return ray{ray_origin, ray_direction, ray_time};
     }
 
     [[nodiscard]] vec3 defocus_disk_sample() const {
@@ -199,8 +201,9 @@ private:
 
         auto ray_origin = camera_center;
         auto ray_direction = pixel_random - ray_origin;
+        auto ray_time = utilities::random_double(0, exposure_time);
 
-        return ray{ray_origin, ray_direction};
+        return ray{ray_origin, ray_direction, ray_time};
     }
 
     [[nodiscard]] point3 pixel_sample_square() const {

@@ -7,8 +7,9 @@
 class interval {
 public:
     double min, max;
-    interval(): min(-utilities::infinity), max(utilities::infinity) {}
-    interval(double min_, double max_): min(min_), max(max_) {}
+    interval(): min(+utilities::infinity), max(-utilities::infinity) {}         // default interval is empty
+    interval(double min_, double max_): min(min_), max(max_) {}                 // constructor below merges two interval
+    interval(const interval& i1, const interval& i2): min(fmin(i1.min, i2.min)), max(fmax(i1.max, i2.max)) {}
 
     [[nodiscard]] inline bool contains(double val) const {
         return min <= val && val <= max;
@@ -20,6 +21,13 @@ public:
         if (val < min) return min;
         if (val > max) return max;
         return val;
+    }
+    [[nodiscard]] inline double size() const {
+        return max - min;
+    }
+    [[nodiscard]] inline interval expand(double delta) const {
+        auto padding = delta / 2;
+        return {min - padding, max + padding};
     }
     static const interval empty;
     static const interval universe;

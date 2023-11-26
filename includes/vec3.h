@@ -12,7 +12,7 @@ public:
 
     vec3(): e{0, 0, 0} {}
     vec3(double e1, double e2, double e3): e{e1, e2, e3} {}
-    explicit vec3(double val): e{val, val, val} {}  // support for broadcasting
+    explicit vec3(double val): e{val, val, val} {}              // support for broadcasting
 
     // this is a copy constructor
     vec3(const vec3 &rhs): e{rhs.e[0], rhs.e[1], rhs.e[2]} {}
@@ -32,10 +32,8 @@ public:
     [[nodiscard]] double y() const { return e[1]; }
     [[nodiscard]] double z() const { return e[2]; }
 
-    // negative
-    vec3 operator-() const { return {-e[0], -e[1], -e[2]}; }
-    // subscript(const version, always returns copy)
-    double operator[](int i) const { return e[i]; }
+    vec3 operator-() const { return {-e[0], -e[1], -e[2]}; } // negative
+    double operator[](int i) const { return e[i]; }                     // subscript(const version, always returns copy)
     // subscript(none-const version, returns reference, a reference can be modified, so shouldn't be a const)
     double& operator[](int i) { return e[i]; }
 
@@ -200,6 +198,19 @@ inline vec3 random_in_unit_disk() {
 
 using normalize_func = vec3 (*) (const vec3&);
 normalize_func unit_vector = normalize;
+
+//namespace utilities {
+//    inline void get_sphere_uv(const vec3& p, double& u, double& v) {
+//        // p is a unit vector
+//        // u is the longitude, v is the latitude
+//        // u = atan2(z, x) / (2*pi) + 0.5
+//        // v = asin(y) / pi + 0.5
+//        auto phi = std::atan2(p.z(), p.x());
+//        auto theta = std::asin(p.y());
+//        u = 1 - (phi + pi) / (2 * pi);
+//        v = (theta + pi / 2) / pi;
+//    }
+//}
 
 
 namespace unit_test {

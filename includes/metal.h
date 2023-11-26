@@ -18,7 +18,7 @@ public:
     bool scatter(const ray& in, const hit_record& rec, color& attenuation, ray& out) const override {
         auto scatter_direction = reflect(in.direction(), rec.normal) + fuzz * vec3::random_unit_vec_on_sphere();
         auto scatter_origin = rec.p;
-        out = ray{scatter_origin, scatter_direction};
+        out = ray{scatter_origin, scatter_direction, in.time()};
         attenuation = albedo;
         return (dot(rec.normal, scatter_direction) > 0);
     }

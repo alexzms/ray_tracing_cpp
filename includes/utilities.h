@@ -10,10 +10,10 @@
 #include "memory"
 #include "limits"
 #include "ray.h"
-#include "vec3.h"
 #include "random"
 
 class interval;
+class vec3;
 
 namespace utilities {
     // Constants
@@ -32,8 +32,13 @@ namespace utilities {
         return dis(gen);
     }
     inline double random_double(double min, double max) {
+        if (min == max) return min;
         return min + (max - min) * random_double();
     }
+    inline int random_int(int min_include, int max_include) {
+        return static_cast<int>(random_double((double)min_include, (double)max_include + 0.9999));
+    }
+
 }
 
 #endif //RAY_TRACING_UTILITIES_H

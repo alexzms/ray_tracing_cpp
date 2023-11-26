@@ -21,5 +21,9 @@
 #include "lambertian.h"
 #include "metal.h"
 #include "dielectric.h"
+#include "aabb.h"
+#include "bvh_node.h"
+#include "texture.h"
+#include "perlin.h"
 
 #endif //RAY_TRACING_COMMON_H

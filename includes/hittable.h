@@ -8,6 +8,7 @@
 #include "ray.h"
 #include "utilities.h"
 #include "interval.h"
+#include "aabb.h"
 
 class material;
 
@@ -16,6 +17,7 @@ public:
     point3 p;
     vec3 normal;
     double t{};
+    double u, v;
     std::shared_ptr<material> surface_material;
     bool front_face{};
 
@@ -28,6 +30,8 @@ public:
         t = another.t;
         front_face = another.front_face;
         surface_material = another.surface_material;
+        u = another.u;
+        v = another.v;
     }
     hit_record& operator = (const hit_record& another) {
         if (this == &another) return *this;
@@ -36,6 +40,8 @@ public:
         t = another.t;
         front_face = another.front_face;
         surface_material = another.surface_material;
+        u = another.u;
+        v = another.v;
         return *this;
     }
 
@@ -49,7 +55,8 @@ public:
 class hittable {
 public:
     virtual ~hittable() = default;
-    virtual bool hit(const ray& r, const interval &inter, hit_record &rec) const = 0;
+    virtual bool hit(const ray& r, const interval &inter, hit_record &rec) const = 0;       // pure-virtual function
+    [[nodiscard]] virtual aabb bounding_box() const = 0;                                    // pure-virtual function
 };
 
 #endif //RAY_TRACING_HITTABLE_H

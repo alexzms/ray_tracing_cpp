@@ -8,6 +8,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
+include_directories(E:/ComputerGraphics/libraries/Utilities/includes)
+link_directories(E:/ComputerGraphics/libraries/Utilities/lib)
+
 add_executable(playground playground.cpp)
 add_executable(output_an_image output_an_image/output_an_image.cpp)
 add_executable(ray_tracing main.cpp

@@ -12,6 +12,7 @@
 #include "vec3.h"
 #include "vector"
 #include "interval.h"
+#include "aabb.h"
 
 class hittable_list: public hittable {
 public:
@@ -21,6 +22,7 @@ public:
     explicit hittable_list(std::shared_ptr<hittable> object) { add(std::move(object)); }
 
     void add(std::shared_ptr<hittable> object) {
+        bbox = aabb(bbox, object->bounding_box());
         objects.emplace_back(std::move(object));
     }
 
@@ -40,6 +42,13 @@ public:
 
         return hit_any;
     }
+
+    [[nodiscard]] aabb bounding_box() const override {
+        return bbox;
+    }
+
+private:
+    aabb bbox;
 };
 
 #endif //RAY_TRACING_HITTABLE_LIST_H

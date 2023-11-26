@@ -115,6 +115,15 @@ private:
     content_obj obj_content;
 };
 
+class GlobalObject {
+public:
+    GlobalObject() {
+        std::cout << "This is executed before main." << std::endl;
+    }
+};
+
+GlobalObject g_object; // 创建全局对象
+
 int main() {
     unit_test::vec3_test();
     std::cout << "-------------------------------------" << std::endl;

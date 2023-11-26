@@ -19,7 +19,7 @@ int not_use_color_and_vec3() {
         for (unsigned w = 0; w != image_width; ++w) {
             auto r = (double) w / (image_width - 1);
             auto g = (double) h / (image_height - 1);
-//            auto b = (double) (w + h) / (image_width + image_width - 2);
+//            auto b = (double) (w_ + h) / (image_width + image_width - 2);
             auto b = 0.0;
 
             int ir = static_cast<int>(r * 255.999);
@@ -46,7 +46,7 @@ int main() {
         for (unsigned w = 0; w != image_width; ++w) {
             auto r = (double) w / (image_width - 1);
             auto g = (double) h / (image_height - 1);
-//            auto b = (double) (w + h) / (image_width + image_width - 2);
+//            auto b = (double) (w_ + h) / (image_width + image_width - 2);
             auto b = 0.0;
             color c{r, g, b};
             write_color(std::cout, c);
