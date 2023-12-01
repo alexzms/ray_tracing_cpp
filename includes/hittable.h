@@ -10,15 +10,17 @@
 #include "interval.h"
 #include "aabb.h"
 
-class material;
+namespace material {
+    class material_base;
+}
 
 class hit_record {
 public:
     point3 p;
     vec3 normal;
     double t{};
-    double u, v;
-    std::shared_ptr<material> surface_material;
+    double u{}, v{};
+    std::shared_ptr<material::material_base> surface_material;
     bool front_face{};
 
     hit_record() = default;

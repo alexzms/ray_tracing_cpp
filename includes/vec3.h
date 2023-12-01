@@ -28,9 +28,13 @@ public:
         return *this;
     }
 
-    [[nodiscard]] double x() const { return e[0]; }
+    [[nodiscard]] double x() const { return e[0]; }                       // for const ones, return value copy
     [[nodiscard]] double y() const { return e[1]; }
     [[nodiscard]] double z() const { return e[2]; }
+
+    [[nodiscard]] double& x() { return e[0]; }                            // for none-const ones, return reference
+    [[nodiscard]] double& y() { return e[1]; }
+    [[nodiscard]] double& z() { return e[2]; }
 
     vec3 operator-() const { return {-e[0], -e[1], -e[2]}; } // negative
     double operator[](int i) const { return e[i]; }                     // subscript(const version, always returns copy)
@@ -194,6 +198,11 @@ inline vec3 random_in_unit_disk() {
         if (p.length_square() < 1)
             return p;
     }
+}
+
+inline vec3 random_vec(double min, double max) {
+    return {utilities::random_double(min, max), utilities::random_double(min, max),
+            utilities::random_double(min, max)};
 }
 
 using normalize_func = vec3 (*) (const vec3&);

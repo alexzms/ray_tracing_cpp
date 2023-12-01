@@ -7,12 +7,17 @@
 
 #include "hittable.h"
 
-class material {
-public:
-    virtual ~material() = default;
+namespace material {
+    class material_base {
+    public:
+        virtual ~material_base() = default;
 
-    virtual bool scatter(const ray& in, const hit_record& rec, color& attenuation, ray& out) const = 0;
-};
+        virtual bool scatter(const ray& in, const hit_record& rec, color& attenuation, ray& out) const = 0;
+        [[nodiscard]] virtual color emitted(double u, double v, const point3& p) const {
+            return {0, 0, 0};                                                 // default is no emission
+        }
+    };
+}
 
 
 #endif //RAY_TRACING_MATERIAL_H

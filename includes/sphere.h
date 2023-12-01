@@ -14,18 +14,18 @@
 #include "aabb.h"
 #include "cmath"
 
-namespace geometry_objects {
+namespace primitive {
     class sphere : public hittable {
     public:
         sphere(): center1(), radius(0.0), moving_obj(false), bbox() {}
         sphere(const sphere &another) = default;
-        sphere(point3 center, double radius, const std::shared_ptr<material>& obj_material):    // stationary sphere
+        sphere(point3 center, double radius, const std::shared_ptr<material::material_base>& obj_material):    // stationary sphere
                 center1(std::move(center)), radius(radius), obj_material(obj_material), moving_obj(false) {
             auto half_edge = vec3{radius, radius, radius};
             bbox = aabb{center1 - half_edge, center1 + half_edge};
         }
 
-        sphere(const point3 &center, const point3 &center2, double radius, const std::shared_ptr<material>& obj_material):
+        sphere(const point3 &center, const point3 &center2, double radius, const std::shared_ptr<material::material_base>& obj_material):
                 center1(center), center_moving_direction(center2 - center), radius(radius),
                 obj_material(obj_material), moving_obj(true) {
             // TODO: add bvh split here
@@ -67,7 +67,7 @@ namespace geometry_objects {
         bool moving_obj;
         double radius;
         aabb bbox;
-        std::shared_ptr<material> obj_material;
+        std::shared_ptr<material::material_base> obj_material;
 
         point3 get_center(double time) const {
             if (!moving_obj) return center1;

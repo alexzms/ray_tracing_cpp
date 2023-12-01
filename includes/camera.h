@@ -16,14 +16,20 @@
 
 class camera {
 public:
-    bool print_progress = true;
-    unsigned int samples_per_pixel = 10;
-    unsigned int max_depth = 50;
-    double vfov = 90;
-    double exposure_time = 1;
-    point3 lookfrom = point3{0, 0, -1};
-    point3 lookat = point3{0, 0, 0};
-    vec3 vup = vec3{0, 1, 0};
+    bool print_progress = true;                            // print the "lines done: xx"
+    unsigned int samples_per_pixel = 10;                   // pixel sample time, large for better visual effects
+    unsigned int max_depth = 50;                           // light ray bounce max depth
+    double vfov = 90;                                      // fov_height, width  will be calculated based on ratio
+    double exposure_time = 1;                              // motion blur exposure time
+    point3 lookfrom = point3{0, 0, -1};        // look from position
+    point3 lookat = point3{0, 0, 0};           // look at position
+    vec3 vup = vec3{0, 1, 0};                  // camera vup vector, actually it controls the rotation
+    std::function<color(double)> background_function =     // function controls how the background color will be rendered
+            [](double blend_factor) -> color {
+                color color1{1.0, 1.0, 1.0};
+                color color2{0.5, 0.7, 1.0};
+                return (1 - blend_factor) * color1 + blend_factor * color2;
+            };
 
     camera(): output(&std::cout), image_height(0), viewport_width(0.0) {}
     ~camera() {
@@ -42,6 +48,15 @@ public:
 
     void set_output_file(const std::string &val) {
         this->output_file = val;
+        if (filestream.is_open())
+            filestream.close();
+
+        if (!output_file.empty() && !filestream.is_open()) {
+            std::cout << "Camera init: output file is not empty, switching to file stream.." << std::endl;
+            filestream.open(output_file);
+            output = &filestream;
+            stream_is_file = true;
+        }
     }
 
     void set_focus_parameter(double angle, double dist = 10.0) {
@@ -63,6 +78,51 @@ public:
         }
     }
 
+    void set_prev_image(const std::string& filename, unsigned int previous_samples = 1) {
+        if (!initialized) initialize();
+        std::ifstream file(filename);
+        if (!file.is_open()) {
+            std::cout << "Error occurred while opening the file." << std::endl;
+            return;
+        }
+        std::string line;
+        // read the first line, should be "P3"
+        std::getline(file, line);
+        if (line != "P3") {
+            std::cout << "Error occurred while reading the file. The file is not a PPM file." << std::endl;
+            return;
+        }
+        // read the second line, should be image_width image_height
+        std::getline(file, line);
+        std::stringstream ss(line);
+        int width, height;
+        ss >> width >> height;
+        if (width != image_width || height != image_height) {
+            std::cout << "Error occurred while reading the file. The file's size does not match." << std::endl;
+            return;
+        }
+        // read the third line, should be 255
+        std::getline(file, line);
+        if (line != "255") {
+            std::cout << "Error occurred while reading the file. The file's color depth is not 255." << std::endl;
+            return;
+        }
+        // read the rest of the file
+        for (unsigned int h = 0; h != image_height; ++h) {
+            for (unsigned int w = 0; w != image_width; ++w) {
+                auto buffer_index = (image_height - h - 1) * image_width * 3 + w * 3;
+                int r, g, b;
+                file >> r >> g >> b;
+                image_buffer[buffer_index] = r;
+                image_buffer[buffer_index + 1] = g;
+                image_buffer[buffer_index + 2] = b;
+                sample_count[h * image_width + w] = previous_samples;
+            }
+        }
+        file.close();
+        std::cout << "Image loaded." << std::endl;
+    }
+
     void initialize() {
         if (initialized) return;
         initialized = true;
@@ -76,6 +136,10 @@ public:
 
         image_height = static_cast<int>(image_width / aspect_ratio);
         image_height = (image_height > 1) ? image_height : 1;
+                                                                                 // late initialize the buffer
+                                                                                 // they are all zero-initialized
+        image_buffer = std::make_unique<unsigned char[]>(image_width * image_height * 3);
+        sample_count = std::make_unique<unsigned int[]>(image_width * image_height);
 
         auto theta = utilities::degree_to_radian(vfov);
         auto h = tan(theta / 2);                                     // h is height for unit focal_length
@@ -94,20 +158,16 @@ public:
         auto defocus_radius = focus_dist * tan(utilities::degree_to_radian(defocus_angle / 2));
         defocus_disk_u = u * defocus_radius;                                    // camera defocus plane, basis vector
         defocus_disk_v = v * defocus_radius;
-        if (!output_file.empty() && !filestream.is_open()) {
-            std::cout << "Camera init: output file is not empty, switching to file stream.." << std::endl;
-            filestream.open(output_file);
-            output = &filestream;
-            stream_is_file = true;
-        }
+//        if (!output_file.empty() && !filestream.is_open()) {
+//            std::cout << "Camera init: output file is not empty, switching to file stream.." << std::endl;
+//            filestream.open(output_file);
+//            output = &filestream;
+//            stream_is_file = true;
+//        }
     }
 
     void render(const hittable_list& world, bool empty_file_first = true) {
         if (!initialized) initialize();
-        if (empty_file_first && stream_is_file) {
-            dynamic_cast<std::ofstream*>(output)->seekp(0);
-        }
-        *output << "P3\n" << image_width << ' ' << image_height << "\n255\n";
         // first loop through height, so that the output will be row-by-row
         for (unsigned h = 0; h != image_height; ++h) {
             if (print_progress) std::clog << "\rScan lines done: " << h << ' ' << std::flush;
@@ -115,12 +175,13 @@ public:
                 color avg_color{0, 0, 0};
                 for (int i = 0; i != samples_per_pixel; ++i) {
                     auto pixel_ray = get_ray_defocus(w, h);
-                    avg_color += ray_color(pixel_ray, max_depth, world);              // core render function
+                    avg_color += ray_color(pixel_ray, max_depth, world);   // core render function
                 }
-                write_color(*output, avg_color, samples_per_pixel);
+                buffer_color(*output,avg_color, h, w,samples_per_pixel);
             }
         }
-        *output << std::endl;                                                 // this will force the stream to write
+        if (print_progress) std::clog << "Writing to file..." << std::endl;
+        write_all_color(*output, empty_file_first);
     }
 
 
@@ -135,7 +196,10 @@ private:
     std::ostream *output;                                                  // if we want to output to file, set the
     std::string output_file;                                               // output_file to some string
 
-    vec3 u, v, w_;                                                          // camera coordinate basis
+    std::unique_ptr<unsigned char[]> image_buffer;                         // store the buffer and count of samples
+    std::unique_ptr<unsigned int[]>  sample_count;
+
+    vec3 u, v, w_;                                                         // camera coordinate basis
 
     vec3 defocus_disk_u;                                                   // camera defocus plane
     vec3 defocus_disk_v;
@@ -214,21 +278,74 @@ private:
     }
 
 
-    [[nodiscard]] static color ray_color(const ray &r, unsigned int remain_depth, const hittable& world) {
-        if (remain_depth <= 0) return color{0, 0, 0};
+    [[nodiscard]] color ray_color(const ray &r, unsigned int remain_depth, const hittable& world) {
+        if (remain_depth <= 0) return color{0, 0, 0};                  // exceeds depths limit
+
         hit_record rec;
-        if (world.hit(r, interval(0.0001, utilities::infinity), rec)) {
-            ray scatter_ray;
-            color attenuation;
-            if (rec.surface_material->scatter(r, rec, attenuation, scatter_ray)) {
-                return attenuation * ray_color(scatter_ray, remain_depth - 1, world);
-            }
-            return color{0, 0, 0};
-        }
         auto blend_factor = 0.5 * (r.direction().y() + 1.0);
-        color color1{1.0, 1.0, 1.0};
-        color color2{0.5, 0.7, 1.0};
-        return (1 - blend_factor) * color1 + blend_factor * color2;
+        if (!world.hit(r, interval(0.0001, utilities::infinity), rec))
+            return background_function(blend_factor);                               // no hit -> return background color
+
+        color emission_color = rec.surface_material->emitted(rec.u, rec.v, rec.p);  // emission term
+        ray scatter_ray;                                                            // scatter term
+        color attenuation;
+        if (!rec.surface_material->scatter(r, rec, attenuation, scatter_ray))
+            return emission_color;                                                  // no scatter hit, just emission
+
+        color scatter_color = attenuation * ray_color(scatter_ray, remain_depth - 1, world);
+        return emission_color + scatter_color;
+    }
+
+    void write_all_color(std::ostream &out, bool empty_file_first, unsigned int depth = 255) {
+        if (empty_file_first && stream_is_file) {
+            dynamic_cast<std::ofstream*>(output)->seekp(0);
+        }
+        out << "P3\n" << image_width << ' ' << image_height << "\n" << depth << "\n";
+        for (unsigned int h = 0; h != image_height; ++h) {
+            for (unsigned int w = 0; w != image_width; ++w) {
+                auto buffer_index = (image_height - h - 1) * image_width * 3 + w * 3;
+                auto r = static_cast<int>(image_buffer[buffer_index]);          // write int, not char
+                auto g = static_cast<int>(image_buffer[buffer_index + 1]);
+                auto b = static_cast<int>(image_buffer[buffer_index + 2]);
+                out << r << ' ' << g << ' ' << b << '\n';
+            }
+        }
+        out << std::endl;                                                       // this will force the stream to write
+    }
+
+    static inline double linear_to_gamma(double val) {
+        return std::sqrt(val);
+    }
+
+    void buffer_color(std::ostream &out, const color &pixel_color, unsigned int h, unsigned int w,
+                                                    unsigned int sample_num, unsigned int depth = 255) {
+        static const interval intensity(0, 0.999);
+        auto r = pixel_color.x();
+        auto g = pixel_color.y();
+        auto b = pixel_color.z();
+
+        // Divide the color by the number of samples and gamma-correct for gamma=2.0.
+        auto scale = 1.0 / sample_num;
+        r = linear_to_gamma(r * scale);
+        g = linear_to_gamma(g * scale);
+        b = linear_to_gamma(b * scale);
+
+        // Write the translated [0,255] value of each color component.
+        double coefficient = depth + 0.999;
+        // write to buffer
+        auto buffer_index = (image_height - h - 1) * image_width * 3 + w * 3;
+        auto buffer2_index = h * image_width + w;          // merge old and new
+        image_buffer[buffer_index] = (static_cast<unsigned char>(intensity.clamp(r) * coefficient) * sample_num
+                + image_buffer[buffer_index] * sample_count[buffer2_index])
+                / (sample_count[h * image_width + w] + sample_num);    // r'=(r_new*new_count+r_old*old_count)/(new+old)
+        image_buffer[buffer_index + 1] = (static_cast<unsigned char>(intensity.clamp(g) * coefficient) * sample_num
+                + image_buffer[buffer_index + 1] * sample_count[buffer2_index])
+                / (sample_count[h * image_width + w] + sample_num);
+        image_buffer[buffer_index + 2] = (static_cast<unsigned char>(intensity.clamp(b) * coefficient) * sample_num
+                + image_buffer[buffer_index + 2] * sample_count[buffer2_index])
+                / (sample_count[h * image_width + w] + sample_num);
+        // update sample count
+        sample_count[h * image_width + w] += sample_num;
     }
 
 };

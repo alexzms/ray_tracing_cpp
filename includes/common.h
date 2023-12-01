@@ -25,5 +25,11 @@
 #include "bvh_node.h"
 #include "texture.h"
 #include "perlin.h"
+#include "quad.h"
+#include "camera_gt.h"
+#include "light_materials.h"
+#include "instances.h"
+#include "volume_materials.h"
+#include "constant_medium.h"
 
 #endif //RAY_TRACING_COMMON_H

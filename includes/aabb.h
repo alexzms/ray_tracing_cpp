@@ -31,6 +31,19 @@ public:
         return z;
     }
 
+    void this_pad(double delta = 0.0001) {
+        this->x = (x.size() >= delta) ? x.expand(delta): x;
+        this->y = (y.size() >= delta) ? y.expand(delta): y;
+        this->z = (z.size() >= delta) ? z.expand(delta): z;
+    };
+
+    [[nodiscard]] aabb pad(double delta = 0.0001) const {
+        interval new_x = (x.size() >= delta) ? x.expand(delta): x;
+        interval new_y = (y.size() >= delta) ? y.expand(delta): y;
+        interval new_z = (z.size() >= delta) ? z.expand(delta): z;
+        return {new_x, new_y, new_z};
+    }
+
     // This version works better with compiler, although it's mathematically the same with hit_my_version
     [[nodiscard]] bool hit(const ray& r, interval ray_t) const {
         for (int a = 0; a < 3; a++) {
@@ -61,5 +74,13 @@ public:
         return true;
     }
 };
+
+aabb operator+(const aabb& bbox, const vec3& offset) {
+    return {bbox.x + offset.x(), bbox.y + offset.y(), bbox.z + offset.z()};
+}
+
+aabb operator+(const vec3& offset, const aabb& bbox) {
+    return bbox + offset;
+}
 
 #endif //RAY_TRACING_AABB_H

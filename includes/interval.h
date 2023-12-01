@@ -33,6 +33,14 @@ public:
     static const interval universe;
 };
 
+interval operator+(const interval& ival, double displacement) {
+    return interval(ival.min + displacement, ival.max + displacement);
+}
+
+interval operator+(double displacement, const interval& ival) {
+    return ival + displacement;
+}
+
 const interval interval::empty(+utilities::infinity, -utilities::infinity);
 const interval interval::universe(-utilities::infinity, +utilities::infinity);
 
