@@ -14,10 +14,14 @@ namespace material::volume {
     public:
         explicit isotropic(std::shared_ptr<texture::texture_base> texture) : texture(std::move(texture)) {}
         explicit isotropic(const color &c) : texture(std::make_shared<texture::solid_color>(c)) {}
-        bool scatter(const ray &in, const hit_record &rec, color &attenuation, ray &out) const override {
+        bool scatter(const ray &in, const hit_record &rec, color &attenuation, ray &out, double& pdf) const override {
             out = ray {rec.p, vec3::random_unit_vec_on_sphere(), in.time()};
             attenuation = texture->value(rec.u, rec.v, rec.p);
+            pdf = 1 / (4 * utilities::pi);
             return true;
+        }
+        [[nodiscard]] double scattering_pdf(const ray& in, const hit_record& rec, const ray& scattered) const override{
+            return 1 / (4 * utilities::pi);
         }
 
     private:

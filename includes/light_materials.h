@@ -12,8 +12,8 @@ namespace material {
     public:
         explicit diffuse_light(std::shared_ptr<texture::texture_base> tex): emit_texture(std::move(tex)) {}
         explicit diffuse_light(const color& c): emit_texture(std::make_shared<texture::solid_color>(c)) {}
-        bool scatter(const ray& in, const hit_record& rec, color& attenuation, ray& out) const override {
-            return false;
+        bool scatter(const ray& in, const hit_record& rec, color& attenuation, ray& out, double& pdf) const override {
+            return false;                                         // when we hit a light_source, we won't scatter
         }
         [[nodiscard]] color emitted(double u, double v, const point3& p) const override {
             return emit_texture->value(u, v, p);

@@ -24,6 +24,7 @@ public:
         z = interval{b1.z, b2.z};
     }
 
+
     [[nodiscard]] const interval& axis(int dim) const {
         if (dim == 0) return x;
         if (dim == 1) return y;

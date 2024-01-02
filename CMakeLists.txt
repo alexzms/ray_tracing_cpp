@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.26)
 project(playground)
-project(output_an_image)
+#project(output_an_image)
 project(ray_tracing)
+project(experiments)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -12,7 +13,8 @@ include_directories(E:/ComputerGraphics/libraries/Utilities/includes)
 link_directories(E:/ComputerGraphics/libraries/Utilities/lib)
 
 add_executable(playground playground.cpp)
-add_executable(output_an_image output_an_image/output_an_image.cpp)
+add_executable(experiments experiments.cpp)
+#add_executable(output_an_image output_an_image/output_an_image.cpp)
 add_executable(ray_tracing main.cpp
         includes/lambertian.h)
 

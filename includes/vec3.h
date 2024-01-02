@@ -205,6 +205,19 @@ inline vec3 random_vec(double min, double max) {
             utilities::random_double(min, max)};
 }
 
+// cosine-weighted hemisphere sampling
+inline vec3 random_cosine_direction() {
+    auto r1 = utilities::random_double();
+    auto r2 = utilities::random_double();
+
+    auto phi = 2*utilities::pi*r1;
+    auto x = cos(phi)*sqrt(r2);
+    auto y = sin(phi)*sqrt(r2);
+    auto z = sqrt(1-r2);
+
+    return vec3(x, y, z);
+}
+
 using normalize_func = vec3 (*) (const vec3&);
 normalize_func unit_vector = normalize;
 

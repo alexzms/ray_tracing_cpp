@@ -15,7 +15,8 @@ namespace material {
     public:
         explicit dielectric(double refract_coeff): refract_coeff(refract_coeff) {}
 
-        bool scatter(const ray& in, const hit_record& rec, color& attenuation, ray& out) const override {
+        // TODO: pdf
+        bool scatter(const ray& in, const hit_record& rec, color& attenuation, ray& out, double& pdf) const override {
             attenuation = color{1.0, 1.0, 1.0};                                 // full pass glass
             double refract_ratio = rec.front_face ? (1.0 / refract_coeff) : refract_coeff; // air to glass or vice versa
             double cos_theta = fmin(dot(-in.direction(), rec.normal), 1.0);

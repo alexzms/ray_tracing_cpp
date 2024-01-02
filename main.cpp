@@ -3,7 +3,6 @@
  */
 
 #include "iostream"
-#include "fstream"
 #include "chrono"
 #include "./includes/common.h"
 
@@ -371,7 +370,7 @@ void cornell_smoke() {
     cam.lookat   = point3(278, 278, 0);
     cam.vup      = vec3(0,1,0);
     cam.initialize();
-    cam.set_prev_image("output/cornell_smoke.ppm", 151);
+//    cam.set_prev_image("output/cornell_smoke.ppm", 151);
     cam.set_output_file("output/cornell_smoke.ppm");
 
     cam.set_focus_parameter(0.0);
@@ -391,7 +390,7 @@ void final_scene() {
             auto z0 = -1000.0 + j*w;
             auto y0 = 0.0;
             auto x1 = x0 + w;
-            auto y1 = utilities::random_double(1,101);
+            auto y1 = 1 + sin(i + j) * 101;
             auto z1 = z0 + w;
 
             boxes1.add(instance::box(point3(x0,y0,z0), point3(x1,y1,z1), ground));
@@ -430,7 +429,8 @@ void final_scene() {
     auto white = std::make_shared<material::lambertian>(color(.73, .73, .73));
     int ns = 1000;
     for (int j = 0; j < ns; j++) {
-        boxes2.add(make_shared<primitive::sphere>(vec3::random_vec(0,165), 10, white));
+        auto linear_arrange_center = normalize(vec3(sin(j), cos(j), tan(j))) * 165.0;
+        boxes2.add(make_shared<primitive::sphere>(linear_arrange_center, 10, white));
     }
 
     world.add(make_shared<instance:: translate>(
@@ -443,7 +443,7 @@ void final_scene() {
     camera cam;
 
     cam.set_camera_parameter(1.0, 800);
-    cam.samples_per_pixel = 150;
+    cam.samples_per_pixel = 50;
     cam.max_depth         = 40;
     cam.background_function = [](double _) -> color { return color{0, 0, 0}; };
 
@@ -453,16 +453,18 @@ void final_scene() {
     cam.vup      = vec3(0,1,0);
 
     cam.initialize();
-    cam.set_prev_image("output/final.ppm", 50);
-    cam.set_output_file("output/final.ppm");
+
+    cam.set_output_file("output/final/final.ppm");
     cam.set_focus_parameter(0.0);
 
-    cam.render(world);
+//    cam.render(world);
+    cam.set_prev_image("output/final/final_3260.ppm", 3260);
+    cam.arrange_render(world, 10, 500);
 }
 
 int main() {
     auto start = std::chrono::high_resolution_clock::now();
-    switch(9) {
+    switch(8) {
         case 0: sample_scene(); break;
         case 1: fancy_scene(); break;
         case 2: two_spheres(); break;

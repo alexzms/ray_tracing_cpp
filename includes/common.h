@@ -31,5 +31,6 @@
 #include "instances.h"
 #include "volume_materials.h"
 #include "constant_medium.h"
+#include "onb.h"
 
 #endif //RAY_TRACING_COMMON_H
